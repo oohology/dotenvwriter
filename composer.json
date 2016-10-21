@@ -2,7 +2,7 @@
     "name": "oohology/dotenvwriter",
     "description": "Interface for editing .env files in PHP.",
     "keywords": ["dotenv", "php", "writer"],
-    "license" : "BSD-3-Clause-Attribution",
+    "license" : "BSD-3-Clause",
     "authors" : [
         {
             "name": "David Woodmansee",
@@ -16,6 +16,11 @@
     "autoload": {
         "psr-4": {
             "DotEnvWriter\\": "src/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.0"
         }
     }
 }
