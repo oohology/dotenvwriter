@@ -169,14 +169,37 @@ class DotEnvWriter
      */
     protected function buildLine($key, $value, $comment = '', $export = false)
     {
-        $escapedValue = str_replace('"', '\"', $value);
-
+        $forceQuotes = (strlen($comment) > 0);
+        $escapedValue = $this->escapeValue($value, $forceQuotes);
         $export = $export ? 'export ' : '';
         $comment = strlen($comment) ? " # {$comment}" : '';
 
-        $line = "{$export}{$key}=\"{$escapedValue}\"{$comment}";
+        $line = "{$export}{$key}={$escapedValue}{$comment}";
 
         return $line;
+    }
+
+    /**
+     * Prepare the value for writing to the file.
+     *
+     * Values need quoted/escaped if they contain any of
+     * the following: whitespace, '\n', '#'
+     *
+     * @param string $value
+     * @param bool $forceQuotes
+     * @return string
+     */
+    protected function escapeValue($value, $forceQuotes = false)
+    {
+        $value = trim($value);
+
+        if (!$forceQuotes && !preg_match('/[#\s"]|\\\\n/', $value)) {
+            return $value;
+        }
+        $escapedValue = str_replace('"', '\"', $value);
+        $escapedValue = "\"{$escapedValue}\"";
+
+        return $escapedValue;
     }
 
     /**
