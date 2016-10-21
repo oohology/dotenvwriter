@@ -1,0 +1,21 @@
+{
+    "name": "oohology/dotenvwriter",
+    "description": "Interface for editing .env files in PHP.",
+    "keywords": ["dotenv", "php", "writer"],
+    "license" : "BSD-3-Clause-Attribution",
+    "authors" : [
+        {
+            "name": "David Woodmansee",
+            "email": "woody@oohology.com",
+            "homepage": "https://www.oohology.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "DotEnvWriter\\": "src/"
+        }
+    }
+}
