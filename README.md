@@ -3,6 +3,10 @@ DotEnvWriter
 
 Interface for editing .env files in PHP.
 
+This is probably not advisable for use in production, but could be handy for
+automating installation tasks, etc.
+
+
 
 Usage
 -----
