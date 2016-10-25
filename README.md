@@ -113,7 +113,7 @@ Result:
     'line' => 'export ENV="dev" # dev or live?',
     'export' => 'export',
     'key' => 'ENV',
-    'value' => 'DEV',
+    'value' => 'dev',
     'comment' => 'dev or live?'
 ];
 ```
