@@ -3,26 +3,117 @@ DotEnvWriter
 
 Interface for editing .env files in PHP.
 
-This is probably not advisable for use in production, but could be handy for
-automating installation tasks, etc.
+Note: This is probably not advisable for use in production, but could be handy for automating installation tasks, etc.
 
 
-
-Usage
+Basic Usage
 -----
+In general, you will open a .env file, use the `set` method to append or replace some
+values, and then call the `save` method to write the result.
 
+Open an environment file and replace a value:
 ```
-$env = new DotEnvWriter\DotEnvWriter('../.env');
-$env->set('ENVIRONMENT', 'dev', 'dev | staging | live');
+use DotEnvWriter\DotEnvWriter;
+
+$env = new DotEnvWriter('../.env');
+$env->set('ENVIRONMENT', 'dev');
 $env->save();
 ```
 
-Also supports fluent interface
-
+Also supports fluent interface:
 ```
-(new DotEnvWriter\DotEnvWriter('../.env'))
+(new DotEnvWriter('../.env'))
     ->set('DB_HOST', 'localhost')
     ->set('DB_NAME', 'test_db')
     ->save();
 ```
 
+Output File
+---------------
+There are multiple ways to read from a source file, make some changes, and write the result to a different output file.  The end result is the same, so choose whichever method best fits your use case:
+```
+$writer = (new DotEnvWriter('.env.example'))
+	->setOutputPath('.env');
+// ...
+$writer->save();
+```
+Or alternately:
+```
+$writer = (new DotEnvWriter('.env.example'));
+// ...
+$writer->save('.env');
+```
+Or using the `load()` method:
+```
+$writer = (new DotEnvWriter('.env'))
+	->load('.env.example');
+// ...
+$writer->save();
+```
+
+Comments
+-------------
+The `set()` method takes a `$comments` parameter. If omitted (or set to `null`,  any existing comment from the source file with be kept intact. If a `$comment` is provided it will overwrite the existing comment. Providing a zero-length 	`$comment` will cause the comment to be deleted.
+
+**Examples:**
+Set a comment
+```
+// source: API_KEY=""
+$writer->set('API_KEY', '1234', 'four-digit code');
+// result: API_KEY=1234 # four-digit code
+```
+Delete a comment
+```
+// source: API_KEY= # four-digit code
+$writer->set('API_KEY', '1234', '');
+// result: API_KEY=1234
+```
+Keep existing comment
+```
+// source: API_KEY= # four-digit code
+$writer->set('API_KEY', '1234');
+// result: API_KEY=1234 # four-digit code
+```
+
+Export
+---------
+The parser supports a bash-style `export` prefix on any line. The `set()` method
+takes an `$export` variable as its 4th argument.
+**Example:**
+By default, keep the existing state
+```
+// source: export API_KEY=""
+$writer->set('API_KEY', '1234');
+// result: export API_KEY=1234
+```
+Or change it by passing a boolean
+```
+// source: export API_KEY=""
+$writer->set('API_KEY', '1234', null, false);
+// result: API_KEY=1234
+$writer->set('API_KEY', '1234', null, true);
+// result: export API_KEY=1234
+```
+
+Read the value of a variable
+--------------------
+The `get` method allows you to find the value of an existing given environment
+variable. It returns false if the variable doesn't exist, or an array containing
+the details of the line from the source file.
+
+Source:
+`export ENV="dev" # dev or live?`
+
+Get command:
+`$writer->get('ENV');`
+
+Result:
+```
+[
+    'line' => 'export ENV="dev" # dev or live?',
+    'export' => 'export',
+    'key' => 'ENV',
+    'value' => 'DEV',
+    'comment' => 'dev or live?'
+];
+```
