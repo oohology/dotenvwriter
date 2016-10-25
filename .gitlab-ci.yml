@@ -3,6 +3,8 @@ cache:
     - vendor/
 
 before_script:
+  - apt-get -yqq update && apt-get -yq upgrade
+  - apt-get -yqq install zip unzip git
   - curl -sS https://getcomposer.org/installer | php
   - php composer.phar install
 
