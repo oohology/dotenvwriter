@@ -8,27 +8,47 @@ class DotEnvWriter
      * The full contents of the .env file during processing
      * @var string
      */
-    protected $buffer;
+    protected $buffer = '';
 
     /**
-     * Path to the .env file
+     * Path where the .env file output will be written
      *
      * @var type
      */
-    protected $filePath;
+    protected $outputPath;
 
     /**
-     * Create the instance
+     * Create the instance. If a $filePath is given it must be writable, although
+     * output can be later redirected to a different path.
      *
-     * @param string
+     * @param string $filePath
      * @param bool
      */
-    public function __construct($filePath, $create = false)
+    public function __construct($filePath = null)
     {
-        $this->filePath = $filePath;
-        $this->ensureFileIsWritable($create);
+        if (!is_null($filePath)) {
+            if (is_file($filePath)) {
+                $this->load($filePath);
+            }
+            $this->setOutputPath($filePath);
+        }
+    }
 
-        $this->buffer = trim(file_get_contents($this->filePath));
+    /**
+     * Read the contents of a file into the buffer
+     *
+     * @param string $filePath
+     * @return \DotEnvWriter\DotEnvWriter
+     * @throws \Exception
+     */
+    public function load($filePath)
+    {
+        if (!is_file($filePath) || (!false === ($buffer = file_get_contents($filePath)))) {
+            throw new \Exception(sprintf('Unable to read environment file at %s.', $filePath));
+        }
+        $this->buffer = trim($buffer);
+
+        return $this;
     }
 
     /**
@@ -38,10 +58,13 @@ class DotEnvWriter
      * @param bool $create
      * @return \DotEnvWriter\DotEnvWriter
      */
-    public function setOutputPath($filePath, $create = false)
+    public function setOutputPath($filePath)
     {
-        $this->filePath = $filePath;
-        $this->ensureFileIsWritable($create);
+        if (false === $this->ensureFileIsWritable($filePath)) {
+            throw new \Exception(sprintf('Unwritable environment file at %s.', $filePath));
+        }
+
+        $this->outputPath = $filePath;
 
         return $this;
     }
@@ -90,10 +113,18 @@ class DotEnvWriter
      * @return \DotEnvWriter\DotEnvWriter
      * @throws \Exception
      */
-    public function save()
+    public function save($filePath = null)
     {
-        if (false === file_put_contents($this->filePath, trim($this->buffer)."\n")) {
-            throw new \Exception(sprintf('Failed to write environment file at %s.', $this->filePath));
+        if (!is_null($filePath)) {
+            $this->setOutputPath($filePath);
+        }
+
+        if (is_null($this->outputPath)) {
+            throw new \Exception('Output file path is not set');
+        }
+
+        if (false === file_put_contents($this->outputPath, trim($this->buffer)."\n")) {
+            throw new \Exception(sprintf('Failed to write environment file at %s.', $this->outputPath));
         }
 
         return $this;
@@ -211,19 +242,16 @@ class DotEnvWriter
     }
 
     /**
-     * Tests the .env file for writability. Creates the file if it doesn's
-     * exist and the create flag is set.
+     * Tests the .env file for writability. If the file doesn't exist, check
+     * the parent directory for writability so the file can be created.
      *
-     * @throws \Exception
+     * @return bool
      */
-    protected function ensureFileIsWritable($create = false)
+    protected function ensureFileIsWritable($filePath)
     {
-        if (!is_file($this->filePath) && $create) {
-            touch($this->filePath);
+        if ((is_file($filePath) && !is_writable($filePath)) || (!is_file($filePath) && !is_writable(dirname($filePath)))) {
+            return false;
         }
-
-        if (!is_writable($this->filePath) || !is_file($this->filePath)) {
-            throw new \Exception(sprintf('Unwritable environment file at %s.', $this->filePath));
-        }
+        return true;
     }
 }

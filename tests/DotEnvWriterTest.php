@@ -4,7 +4,9 @@ use DotEnvWriter\DotEnvWriter;
 
 class DotEnvWriterTest extends PHPUnit_Framework_TestCase
 {
+    protected $writer;
     protected $fixtures;
+    protected $inputFileHash = 'c3d48e94153516f4f76c005dc0c4271f';
     protected $testVars = [
         'DOUBLE_QUOTED_VAR' => '',
         'SINGLE_QUOTED_VAR' => '',
@@ -17,20 +19,15 @@ class DotEnvWriterTest extends PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        $this->fixtures = __DIR__.'/fixtures/';
+        $this->fixtures = [
+            'inputFile' => __DIR__.'/fixtures/.env.example',
+            'outputFile' => __DIR__.'/fixtures/.env',
+        ];
 
-        $writer = (new DotEnvWriter($this->fixtures.'.env.example'))
-            ->setOutputPath($this->fixtures.'.env', true)
-            ->save();
+        $this->writer = (new DotEnvWriter($this->fixtures['inputFile']))
+            ->setOutputPath($this->fixtures['outputFile']);
 
         $this->generateTestVars();
-    }
-
-    protected function generateTestVars()
-    {
-        foreach ($this->testVars as $k => $v) {
-            $this->testVars[$k] = $this->randomString();
-        }
     }
 
     protected function tearDown()
@@ -38,94 +35,17 @@ class DotEnvWriterTest extends PHPUnit_Framework_TestCase
         $this->cleanup();
     }
 
-    public function testCanReplaceValues()
+    protected function replaceWithRandomValues()
     {
-        $writer = (new DotEnvWriter($this->fixtures.'.env'));
         foreach ($this->testVars as $key => $value) {
-            $writer->set($key, $value);
+            $this->writer->set($key, $value);
         }
-        $writer->save();
-
-        $writer = (new DotEnvWriter($this->fixtures.'.env'));
-        foreach ($this->testVars as $key => $value) {
-            $parsedLine = $writer->get($key);
-
-            $this->assertEquals($value, $parsedLine['value'], "assertEquals: {$key} == [{$value}]");
-        }
-    }
-
-    public function testCommentsCanBeOmitted()
-    {
-        $expectedComment = 'this is a comment test';
-        $key = 'HAS_COMMENT_VAR';
-
-        $writer = (new DotEnvWriter($this->fixtures.'.env'))
-            ->set($key, 'changed!')
-            ->save();
-
-        $writer = (new DotEnvWriter($this->fixtures.'.env'));
-        $value = $writer->get($key);
-        $this->assertEquals($expectedComment, $value['comment']);
-    }
-
-    public function testCommentsCanBeReplaced()
-    {
-        $newComment = 'this is the new comment';
-        $key = 'HAS_COMMENT_REPLACEMENT_VAR2';
-
-        $writer = (new DotEnvWriter($this->fixtures.'.env'))
-            ->set($key, 'changed!', $newComment)
-            ->save();
-
-        $writer = (new DotEnvWriter($this->fixtures.'.env'));
-        $value = $writer->get($key);
-        $this->assertEquals($newComment, $value['comment']);
-    }
-
-    public function testExportCanBeOmitted()
-    {
-        $key = 'EXPORT_VAR';
-
-        $writer = (new DotEnvWriter($this->fixtures.'.env'))
-            ->set($key, 'changed!')
-            ->save();
-
-        $writer = (new DotEnvWriter($this->fixtures.'.env'));
-        $value = $writer->get($key);
-        $this->assertEquals(true, $value['export']);
-    }
-
-    public function testExportCanBeReplaced()
-    {
-        $key = 'EXPORT_VAR';
-
-        $writer = (new DotEnvWriter($this->fixtures.'.env'))
-            ->set($key, 'changed!', null, false)
-            ->save();
-
-        $writer = (new DotEnvWriter($this->fixtures.'.env'));
-        $value = $writer->get($key);
-        $this->assertEquals(false, $value['export']);
-    }
-
-    public function testCanAppend()
-    {
-        $key = 'NONEXISTENT_KEY';
-        $value = $this->randomString();
-
-        $writer = (new DotEnvWriter($this->fixtures.'.env'))
-            ->set($key, $value, null, false)
-            ->save();
-
-        $writer = (new DotEnvWriter($this->fixtures.'.env'));
-        $parsedLine = $writer->get($key);
-        $this->assertEquals($value, $parsedLine['value']);
     }
 
     protected function cleanup()
     {
-        if (is_file($this->fixtures.'.env')) {
-            unlink($this->fixtures.'.env');
+        if (is_file($this->fixtures['outputFile'])) {
+            unlink($this->fixtures['outputFile']);
         }
     }
 
@@ -138,4 +58,125 @@ class DotEnvWriterTest extends PHPUnit_Framework_TestCase
         $result .= '\'';
         return $result;
     }
+
+    protected function generateTestVars()
+    {
+        foreach ($this->testVars as $k => $v) {
+            $this->testVars[$k] = $this->randomString();
+        }
+    }
+
+    protected function checkTestVarsInOutputFile()
+    {
+        $writer = (new DotEnvWriter($this->fixtures['outputFile']));
+        foreach ($this->testVars as $key => $value) {
+            $parsedLine = $writer->get($key);
+
+            $this->assertEquals($value, $parsedLine['value'], "assertEquals: {$key} == [{$value}]");
+        }
+    }
+
+    protected function checkInputFileHash()
+    {
+        $this->assertEquals($this->inputFileHash, md5_file($this->fixtures['inputFile']));
+    }
+
+    public function testSaveToPath()
+    {
+        $this->writer = (new DotEnvWriter($this->fixtures['inputFile']));
+        $this->replaceWithRandomValues();
+
+        $this->writer->save($this->fixtures['outputFile']);
+
+        $this->checkTestVarsInOutputFile();
+        $this->checkInputFileHash();
+    }
+
+    public function testLoadThenSaveToPath()
+    {
+        $this->writer = (new DotEnvWriter())->load($this->fixtures['inputFile']);
+        $this->replaceWithRandomValues();
+        $this->writer->save($this->fixtures['outputFile']);
+
+        $this->checkTestVarsInOutputFile();
+        $this->checkInputFileHash();
+    }
+
+    public function testLoadKeepsOriginalOutputPath()
+    {
+        $this->writer = (new DotEnvWriter($this->fixtures['outputFile']))->load($this->fixtures['inputFile']);
+        $this->replaceWithRandomValues();
+        $this->writer->save();
+
+        $this->checkTestVarsInOutputFile();
+        $this->checkInputFileHash();
+    }
+
+    public function testCanReplaceValues()
+    {
+        $this->replaceWithRandomValues();
+        $this->writer->save();
+
+        $this->checkTestVarsInOutputFile();
+        $this->checkInputFileHash();
+    }
+
+    public function testCommentsCanBeOmitted()
+    {
+        $expectedComment = 'this is a comment test';
+        $key = 'HAS_COMMENT_VAR';
+
+        $this->writer->set($key, 'changed!')->save();
+
+        $writer = (new DotEnvWriter($this->fixtures['outputFile']));
+        $value = $writer->get($key);
+        $this->assertEquals($expectedComment, $value['comment']);
+    }
+
+    public function testCommentsCanBeReplaced()
+    {
+        $newComment = 'this is the new comment';
+        $key = 'HAS_COMMENT_REPLACEMENT_VAR2';
+
+        $this->writer->set($key, 'changed!', $newComment)->save();
+
+        $writer = (new DotEnvWriter($this->fixtures['outputFile']));
+        $value = $writer->get($key);
+        $this->assertEquals($newComment, $value['comment']);
+    }
+
+    public function testExportCanBeOmitted()
+    {
+        $key = 'EXPORT_VAR';
+
+        $this->writer->set($key, 'changed!')->save();
+
+        $writer = (new DotEnvWriter($this->fixtures['outputFile']));
+        $value = $writer->get($key);
+        $this->assertEquals(true, $value['export']);
+    }
+
+    public function testExportCanBeReplaced()
+    {
+        $key = 'EXPORT_VAR';
+
+        $this->writer->set($key, 'changed!', null, false)->save();
+
+        $writer = (new DotEnvWriter($this->fixtures['outputFile']));
+        $value = $writer->get($key);
+        $this->assertEquals(false, $value['export']);
+    }
+
+    public function testCanAppend()
+    {
+        $key = 'NONEXISTENT_KEY';
+        $value = $this->randomString();
+
+        $this->writer->set($key, $value, null, false)->save();
+
+        $writer = (new DotEnvWriter($this->fixtures['outputFile']));
+        $parsedLine = $writer->get($key);
+        $this->assertEquals($value, $parsedLine['value']);
+    }
+
 }
