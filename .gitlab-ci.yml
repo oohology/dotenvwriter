@@ -9,7 +9,8 @@ before_script:
 stages:
   - test
 
--phpunit:
+phpunit:
+  image: php:5.6
   stage: test
   script:
     - vendor/bin/phpunit
