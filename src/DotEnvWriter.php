@@ -11,13 +11,6 @@ class DotEnvWriter
     protected $buffer;
 
     /**
-     * Should a .env file be created if it doesn't exist?
-     *
-     * @var bool
-     */
-    protected $create;
-
-    /**
      * Path to the .env file
      *
      * @var type
@@ -33,10 +26,24 @@ class DotEnvWriter
     public function __construct($filePath, $create = false)
     {
         $this->filePath = $filePath;
-        $this->create = $create;
+        $this->ensureFileIsWritable($create);
 
-        $this->ensureFileIsWritable();
         $this->buffer = trim(file_get_contents($this->filePath));
+    }
+
+    /**
+     * Set the path to write the ouput (if diffent from the source file)
+     *
+     * @param string $filePath
+     * @param bool $create
+     * @return \DotEnvWriter\DotEnvWriter
+     */
+    public function setOutputPath($filePath, $create = false)
+    {
+        $this->filePath = $filePath;
+        $this->ensureFileIsWritable($create);
+
+        return $this;
     }
 
     /**
@@ -100,7 +107,7 @@ class DotEnvWriter
      * @param type $key
      * @return boolean|array
      */
-    protected function get($key)
+    public function get($key)
     {
         // first, find the quote style
         $pattern = '/^(export\h)?\h*'.preg_quote($key, '/').'\h*=\h*(?P<quote>[\'"])?/m';
@@ -115,6 +122,8 @@ class DotEnvWriter
             if (!preg_match($pattern, $this->buffer, $m)) {
                 return false;
             }
+            $m['value'] = str_replace('\\\\', '\\', $m['value']);
+            $m['value'] = str_replace("\\$quote", $quote, $m['value']);
         } else {
             // if it's not quoted then it should just be one string of basic word characters
             $pattern = '/^(?P<export>export\h)?\h*(?P<key>'.preg_quote($key, '/').')\h*=\h*(?P<value>.*?)\h*(?:#\h*(?P<comment>.*))?$/m';
@@ -191,15 +200,14 @@ class DotEnvWriter
      */
     protected function escapeValue($value, $forceQuotes = false)
     {
-        $value = trim($value);
-
-        if (!$forceQuotes && !preg_match('/[#\s"]|\\\\n/', $value)) {
+        if (!$forceQuotes && !preg_match('/[#\s"\'\\\\]|\\\\n/', $value)) {
             return $value;
         }
-        $escapedValue = str_replace('"', '\"', $value);
-        $escapedValue = "\"{$escapedValue}\"";
+        $value = str_replace('\\', '\\\\', $value);
+        $value = str_replace('"', '\"', $value);
+        $value = "\"{$value}\"";
 
-        return $escapedValue;
+        return $value;
     }
 
     /**
@@ -208,9 +216,9 @@ class DotEnvWriter
      *
      * @throws \Exception
      */
-    protected function ensureFileIsWritable()
+    protected function ensureFileIsWritable($create = false)
     {
-        if (!is_file($this->filePath) && $this->create) {
+        if (!is_file($this->filePath) && $create) {
             touch($this->filePath);
         }
 
