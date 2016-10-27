@@ -55,7 +55,6 @@ class DotEnvWriterTest extends PHPUnit_Framework_TestCase
         for ($i = 0; $i < $length; $i++) {
             $result .= chr(mt_rand($startChar, $endChar));
         }
-        $result .= '\'';
         return $result;
     }
 

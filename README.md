@@ -53,7 +53,7 @@ $writer->save();
 
 Comments
 -------------
-The `set()` method takes a `$comments` parameter. If omitted (or set to `null`,  any existing comment from the source file with be kept intact. If a `$comment` is provided it will overwrite the existing comment. Providing a zero-length 	`$comment` will cause the comment to be deleted.
+The `set()` method takes a `$comments` parameter. If omitted (or set to `null`),  any existing comment from the source file with be kept intact. If a `$comment` is provided it will overwrite the existing comment. Providing a zero-length 	`$comment` will cause the comment to be deleted.
 
 **Examples:**
 Set a comment
