@@ -1,10 +1,12 @@
 DotEnvWriter
 ============
+Interface for editing .env files in PHP
 
-Interface for editing .env files in PHP.
+[![Build Status](https://travis-ci.org/oohology/dotenvwriter.svg?branch=master)](https://travis-ci.org/oohology/dotenvwriter)
+
+----------
 
 Note: This is probably not advisable for use in production, but could be handy for automating installation tasks, etc.
-
 
 Basic Usage
 -----
@@ -117,4 +119,3 @@ Result:
     'comment' => 'dev or live?'
 ];
 ```
-
