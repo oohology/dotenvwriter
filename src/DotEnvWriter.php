@@ -13,7 +13,7 @@ class DotEnvWriter
     /**
      * Path where the .env file output will be written
      *
-     * @var type
+     * @var string
      */
     protected $outputPath;
 
@@ -55,7 +55,7 @@ class DotEnvWriter
      * Set the path to write the ouput (if diffent from the source file)
      *
      * @param string $filePath
-     * @param bool $create
+     * @throws \Exception
      * @return \DotEnvWriter\DotEnvWriter
      */
     public function setOutputPath($filePath)
@@ -67,6 +67,17 @@ class DotEnvWriter
         $this->outputPath = $filePath;
 
         return $this;
+    }
+
+    /**
+     * Write a single line of text.
+     *
+     * @param string $text
+     */
+    public function line($text = '') {
+        if (! empty($text) == true) {
+            $this->buffer .= "{$text}\n";
+        }
     }
 
     /**
@@ -135,7 +146,7 @@ class DotEnvWriter
      * if the variable doesn't exist, or an array containing the full line as
      * well as its components broken out.
      *
-     * @param type $key
+     * @param string $key
      * @return boolean|array
      */
     public function get($key)
