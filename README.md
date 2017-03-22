@@ -97,7 +97,7 @@ $writer->set('API_KEY', '1234', null, true);
 // result: export API_KEY=1234
 ```
 
-Read the value of a variable
+Read the Value of a Variable
 --------------------
 The `get` method allows you to find the value of an existing given environment
 variable. It returns false if the variable doesn't exist, or an array containing
@@ -118,4 +118,18 @@ Result:
     'value' => 'dev',
     'comment' => 'dev or live?'
 ];
+```
+
+Writing Blank/Comment Lines
+----------------------
+The `line` method appends a single unprocessed line of output to the file. It could be used
+to insert blank lines or comments. If you wish to append a new variable, the
+`set` method should be used instead to prevent duplicates.
+
+```
+$writer = (new DotEnvWriter)
+    ->line()
+    ->line('# App Settings')
+    ->line()
+    ->set('APP_ENV', 'dev');
 ```

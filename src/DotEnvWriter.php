@@ -18,6 +18,13 @@ class DotEnvWriter
     protected $outputPath;
 
     /**
+     * The line endings used in the file, e.g \n or \r\n
+     *
+     * @var string
+     */
+    protected $lineEnding;
+
+    /**
      * Create the instance. If a $filePath is given it must be writable, although
      * output can be later redirected to a different path.
      *
@@ -46,13 +53,37 @@ class DotEnvWriter
         if (!is_file($filePath) || (!false === ($buffer = file_get_contents($filePath)))) {
             throw new \Exception(sprintf('Unable to read environment file at %s.', $filePath));
         }
-        $this->buffer = trim($buffer);
+
+        // detect the source line endings
+        if (is_null($this->lineEnding)) {
+            if (preg_match('/\R/', $buffer, $m)) {
+                $this->lineEnding = $m[0];
+            } else {
+                $this->lineEnding = PHP_EOL;
+            }
+        }
+
+        // The regex patterns require unix-style line endings
+        $this->buffer = trim(preg_replace('/\R/', "\n", $buffer));
 
         return $this;
     }
 
     /**
-     * Set the path to write the ouput (if diffent from the source file)
+     * Set the line endings that will be used in the output.
+     *
+     * @param string $lineEnding
+     * @return \DotEnvWriter\DotEnvWriter
+     */
+    public function setLineEnding($lineEnding)
+    {
+        $this->lineEnding = $lineEnding;
+
+        return $this;
+    }
+
+    /**
+     * Set the path to write the output (if different from the source file)
      *
      * @param string $filePath
      * @throws \Exception
@@ -73,11 +104,13 @@ class DotEnvWriter
      * Write a single line of text.
      *
      * @param string $text
+     * @return \DotEnvWriter\DotEnvWriter
      */
-    public function line($text = '') {
-        if (! empty($text) == true) {
-            $this->buffer .= "{$text}\n";
-        }
+    public function line($text = '')
+    {
+        $this->buffer .= "{$text}\n";
+
+        return $this;
     }
 
     /**
@@ -134,7 +167,9 @@ class DotEnvWriter
             throw new \Exception('Output file path is not set');
         }
 
-        if (false === file_put_contents($this->outputPath, trim($this->buffer)."\n")) {
+        $output = preg_replace('/\R/', $this->lineEnding, trim($this->buffer));
+
+        if (false === file_put_contents($this->outputPath, $output.$this->lineEnding)) {
             throw new \Exception(sprintf('Failed to write environment file at %s.', $this->outputPath));
         }
 

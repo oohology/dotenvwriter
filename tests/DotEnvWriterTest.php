@@ -77,7 +77,8 @@ class DotEnvWriterTest extends PHPUnit_Framework_TestCase
 
     protected function checkInputFileHash()
     {
-        $this->assertEquals($this->inputFileHash, md5_file($this->fixtures['inputFile']));
+        $inputFileContents = preg_replace('/\R/', "\n", file_get_contents($this->fixtures['inputFile']));
+        $this->assertEquals($this->inputFileHash, md5($inputFileContents));
     }
 
     public function testSaveToPath()
