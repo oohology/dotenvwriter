@@ -22,7 +22,7 @@ class DotEnvWriter
      *
      * @var string
      */
-    protected $lineEnding;
+    protected $lineEnding = PHP_EOL;
 
     /**
      * Create the instance. If a $filePath is given it must be writable, although
