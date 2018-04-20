@@ -245,6 +245,21 @@ class DotEnvWriter
     }
 
     /**
+     * Cast special values to the proper format for storage in the env file
+     *
+     * @param mixed $value
+     *
+     * @return string
+     */
+    protected function castValue($value)
+    {
+        if( $value === true ) return "true";
+        if( $value === false ) return "false";
+        
+        return $value;
+    }
+    
+    /**
      * Build an environment file line from the individual components
      *
      * @param string $key
@@ -255,6 +270,7 @@ class DotEnvWriter
      */
     protected function buildLine($key, $value, $comment = '', $export = false)
     {
+        $value = $this->castValue($value);
         $forceQuotes = (strlen($comment) > 0);
         $escapedValue = $this->escapeValue($value, $forceQuotes);
         $export = $export ? 'export ' : '';

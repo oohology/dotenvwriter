@@ -6,7 +6,7 @@ class DotEnvWriterTest extends PHPUnit_Framework_TestCase
 {
     protected $writer;
     protected $fixtures;
-    protected $inputFileHash = 'c3d48e94153516f4f76c005dc0c4271f';
+    protected $inputFileHash = '892b1da67ef6ebd5f8e61430eaf06a4a';
     protected $testVars = [
         'DOUBLE_QUOTED_VAR' => '',
         'SINGLE_QUOTED_VAR' => '',
@@ -15,6 +15,7 @@ class DotEnvWriterTest extends PHPUnit_Framework_TestCase
         'HAS_COMMENT_VAR' => '',
         'HAS_COMMENT_REPLACEMENT_VAR2' => '',
         'IS_A_COMMENT_VAR' => '',
+        'IS_A_BOOLEAN_VAR' => ''
     ];
 
     protected function setUp()
@@ -179,4 +180,20 @@ class DotEnvWriterTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($value, $parsedLine['value']);
     }
 
+    public function testCanStoreBooleans()
+    {
+        $key = 'IS_A_BOOLEAN_VAR';
+
+        $this->writer->set($key, false)->save();
+
+        $writer = (new DotEnvWriter($this->fixtures['outputFile']));
+        $parsedLine = $writer->get($key);
+        $this->assertEquals("false", $parsedLine['value']);
+
+        $this->writer->set($key, true)->save();
+
+        $writer = (new DotEnvWriter($this->fixtures['outputFile']));
+        $parsedLine = $writer->get($key);
+        $this->assertEquals("true", $parsedLine['value']);
+    }
 }
