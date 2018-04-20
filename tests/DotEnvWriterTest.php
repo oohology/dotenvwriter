@@ -184,6 +184,8 @@ class DotEnvWriterTest extends PHPUnit_Framework_TestCase
     {
         $key = 'IS_A_BOOLEAN_VAR';
 
+        $this->writer->castBooleans();
+
         $this->writer->set($key, false)->save();
 
         $writer = (new DotEnvWriter($this->fixtures['outputFile']));
@@ -195,5 +197,35 @@ class DotEnvWriterTest extends PHPUnit_Framework_TestCase
         $writer = (new DotEnvWriter($this->fixtures['outputFile']));
         $parsedLine = $writer->get($key);
         $this->assertEquals("true", $parsedLine['value']);
+    }
+
+    public function testItCastsToBooleansOnlyIfEnabled()
+    {
+        $key = 'IS_A_BOOLEAN_VAR';
+
+        // By default casting booleans is disabled
+        $this->writer->set($key, true)->save();
+
+        $writer = (new DotEnvWriter($this->fixtures['outputFile']));
+        $parsedLine = $writer->get($key);
+        $this->assertEquals("1", $parsedLine['value']);
+        
+        // If enabled, values will be casted
+        $this->writer->castBooleans();
+
+        $this->writer->set($key, true)->save();
+
+        $writer = (new DotEnvWriter($this->fixtures['outputFile']));
+        $parsedLine = $writer->get($key);
+        $this->assertEquals("true", $parsedLine['value']);
+        
+        // And then we can disable it again
+        $this->writer->castBooleans(false);
+
+        $this->writer->set($key, false)->save();
+
+        $writer = (new DotEnvWriter($this->fixtures['outputFile']));
+        $parsedLine = $writer->get($key);
+        $this->assertEquals("", $parsedLine['value']);
     }
 }
