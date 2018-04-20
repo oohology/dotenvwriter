@@ -25,6 +25,13 @@ class DotEnvWriter
     protected $lineEnding = PHP_EOL;
 
     /**
+     * Controls if booleans should be casted when writing the file.
+     *
+     * @var string
+     */
+    protected $castBooleans = false;
+
+    /**
      * Create the instance. If a $filePath is given it must be writable, although
      * output can be later redirected to a different path.
      *
@@ -245,6 +252,33 @@ class DotEnvWriter
     }
 
     /**
+     * Enable / Disable cast booleans.
+     *
+     * @param bool $shouldCast
+     */
+    public function castBooleans($shouldCast = true)
+    {
+        $this->castBooleans = $shouldCast;
+    }
+
+    /**
+     * Cast special values to the proper format for storage in the env file
+     *
+     * @param mixed $value
+     *
+     * @return string
+     */
+    protected function castValue($value)
+    {
+        if ($this->castBooleans) {
+            if ($value === true) return "true";
+            if ($value === false) return "false";
+        }
+        
+        return $value;
+    }
+    
+    /**
      * Build an environment file line from the individual components
      *
      * @param string $key
@@ -255,6 +289,7 @@ class DotEnvWriter
      */
     protected function buildLine($key, $value, $comment = '', $export = false)
     {
+        $value = $this->castValue($value);
         $forceQuotes = (strlen($comment) > 0);
         $escapedValue = $this->escapeValue($value, $forceQuotes);
         $export = $export ? 'export ' : '';
