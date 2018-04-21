@@ -255,10 +255,14 @@ class DotEnvWriter
      * Enable / Disable cast booleans.
      *
      * @param bool $shouldCast
+     *
+     * @return \DotEnvWriter\DotEnvWriter
      */
     public function castBooleans($shouldCast = true)
     {
         $this->castBooleans = $shouldCast;
+        
+        return $this;
     }
 
     /**
