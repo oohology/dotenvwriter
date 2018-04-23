@@ -97,6 +97,37 @@ $writer->set('API_KEY', '1234', null, true);
 // result: export API_KEY=1234
 ```
 
+Casting booleans
+---------
+By default boolean values will not be stored as `true` or `false`. 
+
+To enable casting booleans you should call the `castBooleans()` method.
+
+**Example:**
+
+Default behaviour
+```
+$writer->set('REGISTRATION_OPENED', true);
+// result: REGISTRATION_OPENED=1
+
+
+$writer->set('REGISTRATION_OPENED', false);
+// result: REGISTRATION_OPENED=
+```
+
+After calling `castBooleans()` method
+
+```
+$writer->castBooleans();
+
+$writer->set('REGISTRATION_OPENED', true);
+// result: REGISTRATION_OPENED=true
+
+
+$writer->set('REGISTRATION_OPENED', false);
+// result: REGISTRATION_OPENED=false
+```
+
 Read the Value of a Variable
 --------------------
 The `get` method allows you to find the value of an existing given environment
